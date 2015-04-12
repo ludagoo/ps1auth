@@ -14,7 +14,11 @@ export PAYPAL_RECEIVER_EMAIL="money@vagrant.lan"
 
 # Update the System
 #sudo pacman -Syu --noconfirm
-sudo pacman -Syy
+pacman -Syy
+pacman -S archlinux-keyring --noconfirm
+
+# Set Timezone
+timedatectl set-timezone America/Chicago
 
 # Setup locale.gen
 cat << EOF > /etc/locale.gen
@@ -24,13 +28,13 @@ EOF
 locale-gen
 
 # Install Dependencies 
-sudo pacman -S --noconfirm --needed postgresql python2-virtualenv samba nginx
-yaourt -Sy --noconfirm --aur rabbitmq
+pacman -S --noconfirm --needed postgresql samba nginx
+sudo -u vagrant yaourt -Sy --noconfirm --aur rabbitmq
 
 # Setup Samba
-sudo samba-tool domain provision --realm=vagrant.lan --domain=${AD_DOMAIN} --server-role=dc --use-rfc2307 --adminpass=${AD_BINDDN_PASSWORD}
-sudo systemctl start samba
-sudo systemctl enable samba
+samba-tool domain provision --realm=vagrant.lan --domain=${AD_DOMAIN} --server-role=dc --use-rfc2307 --adminpass=${AD_BINDDN_PASSWORD}
+systemctl start samba
+systemctl enable samba
 
 # Set Shell Environment Variables
 cat << EOF >> .bashrc
@@ -48,14 +52,14 @@ EOF
 #  Setup Database
 chmod 755 /home/vagrant
 sudo -u postgres initdb --locale en_US.UTF-8 -D '/var/lib/postgres/data'
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
+systemctl start postgresql
+systemctl enable postgresql
 sudo -u postgres createuser --superuser vagrant
 sudo -u vagrant createdb ps1auth
 
 # Bootstrap App
 
-sudo -u vagrant virtualenv2 venv
+sudo -u vagrant python -m venv venv
 sudo -u vagrant venv/bin/pip install -r /vagrant/requirements/local.txt
 sudo -u vagrant venv/bin/pip install gunicorn
 sudo -u vagrant -E venv/bin/python /vagrant/manage.py syncdb --noinput
@@ -83,7 +87,7 @@ After=vboxservice.service
 Type=simple
 User=vagrant
 WorkingDirectory=/vagrant
-ExecStart=/home/vagrant/venv/bin/gunicorn --debug --log-level debug ps1auth.wsgi:application --reload
+ExecStart=/home/vagrant/venv/bin/gunicorn --log-level debug ps1auth.wsgi:application --reload
 EnvironmentFile=-/home/vagrant/ps1auth.conf
 
 [Install]
@@ -164,8 +168,8 @@ systemctl start rabbitmq
 systemctl enable rabbitmq
 systemctl start celery
 systemctl enable celery
-sudo systemctl start systemd-journal-gatewayd.socket
-sudo systemctl enable systemd-journal-gatewayd.socket
+systemctl start systemd-journal-gatewayd.socket
+systemctl enable systemd-journal-gatewayd.socket
 
 SCRIPT
 
@@ -177,6 +181,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network "forwarded_port", guest: 5555, host: 5555, auto_correct: true
   config.vm.network "forwarded_port", guest: 8001, host: 8001, auto_correct: true
   config.vm.network "forwarded_port", guest: 19531, host: 8002, auto_correct: true
+  config.vm.network "forwarded_port", guest: 389, host: 1389, auto_correct: true
+
   config.vm.provider "virtualbox" do |v|
     v.memory = 2048
     v.cpus = 2
