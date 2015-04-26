@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import password_reset_complete
@@ -162,6 +163,7 @@ def win32_filetime(filetime_timestamp):
     microseconds = int(filetime_timestamp) / 10.
     return datetime(1601,1,1) + timedelta(microseconds=microseconds)
 
+@staff_member_required
 def edit_groups_for_user(request, user_id):
     if request.method == "POST":
         form = EditUserGroupForm(request.POST)
