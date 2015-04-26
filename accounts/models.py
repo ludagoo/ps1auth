@@ -1,14 +1,14 @@
-from django.db import models
+from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from .backends import PS1Backend, get_ldap_connection
-from ldap3 import BASE, MODIFY_ADD, MODIFY_REPLACE, ALL_ATTRIBUTES, LEVEL
+from django.db import models
+from ldap3 import BASE, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, ALL_ATTRIBUTES, LEVEL
 from ldap3.utils.conv import escape_bytes
 from ldap3.utils.dn import escape_attribute_value
 from ldap3.core.exceptions import LDAPBindError
-from django.conf import settings
 import uuid
-from django.core.cache import cache
-from pprint import pprint
+from .backends import PS1Backend, get_ldap_connection
+
 
 class PS1UserManager(BaseUserManager):
 
@@ -225,7 +225,7 @@ class PS1User(AbstractBaseUser):
         return self.get_short_name()
 
 class PS1Group(models.Model):
-    dn = models.CharField(max_length=255)
+    dn = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255)
 
     class Meta:
@@ -238,16 +238,23 @@ class PS1Group(models.Model):
         }
         with get_ldap_connection() as c:
             c.modify(self.dn, add_to_group_changelist)
+            logger.info(c.response)
+            user._expire_ldap_data()
+            return c.result
+
+    def remove_user(self, user):
+        user_dn = user.ldap_user['distinguishedName'][0]
+        add_to_group_changelist = {
+            'member': (MODIFY_DELETE, [user_dn])
+        }
+        with get_ldap_connection() as c:
+            c.modify(self.dn, add_to_group_changelist)
+            logger.info(c.response)
+            user._expire_ldap_data()
+            return c.result
 
     def has_user(self, user):
-        with get_ldap_connection() as c:
-            c.search(self.dn, '(objectClass=*)', BASE, attributes = ALL_ATTRIBUTES)
-            result = c.response
-
-    def ldap_object(self):
-        with get_ldap_connection() as c:
-            c.search(self.dn, '(objectClass=*)', BASE, attributes = ALL_ATTRIBUTES)
-            return c.response
+        return self.dn in user.ldap_user['memberOf']
 
     def __str__(self):
         return self.display_name

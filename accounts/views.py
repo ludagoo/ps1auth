@@ -12,7 +12,7 @@ from django.template.response import TemplateResponse
 from django.views.decorators.debug import sensitive_variables, sensitive_post_parameters
 
 from .tokens import default_token_generator
-from .forms import SetPasswordForm
+from .forms import SetPasswordForm, EditUserGroupForm
 from .backends import PS1Backend, get_ldap_connection
 from .models import Token, PS1Group
 
@@ -163,7 +163,42 @@ def win32_filetime(filetime_timestamp):
     return datetime(1601,1,1) + timedelta(microseconds=microseconds)
 
 def edit_groups_for_user(request, user_id):
+    if request.method == "POST":
+        form = EditUserGroupForm(request.POST)
+        if form.is_valid() and form.apply():
+            if form.cleaned_data['action'] == 'add':
+                messages.success(request,
+                    "{} is now a {} person.".format(
+                        form.account,
+                        form.group
+                    )
+                )
+            elif form.cleaned_data['action'] == 'remove':
+                messages.success(request,
+                    "{} is no longer a {} person.".format(
+                    form.account,
+                    form.group
+                    )
+                )
+        else:
+            messages.error(request, "Failed to change person.")
+
     data = {}
-    data['account'] = PS1User.objects.get(pk=user_id)
-    data['groups'] = PS1Group.objects.all()
+    account = PS1User.objects.get(pk=user_id)
+    data['account'] = account
+    data['group_forms'] = []
+    for group in PS1Group.objects.all():
+        if group.has_user(account):
+            action='remove'
+        else:
+            action='add'
+        form_data = {
+            'account_pk':  account.pk,
+            'group_dn': group.dn,
+            'action':   action,
+        }
+        form = EditUserGroupForm(form_data)
+        form._group = group
+        form._account = account
+        data['group_forms'].append(form)
     return render(request, 'accounts/edit_groups_for_user.html', data)
