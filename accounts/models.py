@@ -238,7 +238,6 @@ class PS1Group(models.Model):
         }
         with get_ldap_connection() as c:
             c.modify(self.dn, add_to_group_changelist)
-            logger.info(c.response)
             user._expire_ldap_data()
             return c.result
 
@@ -249,7 +248,6 @@ class PS1Group(models.Model):
         }
         with get_ldap_connection() as c:
             c.modify(self.dn, add_to_group_changelist)
-            logger.info(c.response)
             user._expire_ldap_data()
             return c.result
 
