@@ -1,4 +1,4 @@
-Django==1.7.1
+Django==1.8
 ldap3==0.9.7.2
 pytz==2013b
 psycopg2==2.5.1

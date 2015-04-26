@@ -14,7 +14,7 @@ from django.views.decorators.debug import sensitive_variables, sensitive_post_pa
 from .tokens import default_token_generator
 from .forms import SetPasswordForm
 from .backends import PS1Backend, get_ldap_connection
-from .models import Token
+from .models import Token, PS1Group
 
 def hello_world(request):
     t = get_template("hello_world.html")
@@ -156,10 +156,14 @@ def audits(request):
     data['payers'] = paypal_payers()
     return render( request, "audits.html", data )
 
-
 from datetime import datetime, timedelta
 
 def win32_filetime(filetime_timestamp):
     microseconds = int(filetime_timestamp) / 10.
     return datetime(1601,1,1) + timedelta(microseconds=microseconds)
 
+def edit_groups_for_user(request, user_id):
+    data = {}
+    data['account'] = PS1User.objects.get(pk=user_id)
+    data['groups'] = PS1Group.objects.all()
+    return render(request, 'accounts/edit_groups_for_user.html', data)
