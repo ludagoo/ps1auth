@@ -3,12 +3,15 @@
 
 {% block content %}
 <div class="row">
-  <div class=col-md-3>
-    <ul>
+  <div class="col-md-3">
+    <h2>{{account|title}}'s Groups</h2>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-3">
       {% for form in group_forms %}
       <form class="form" action="" method="post">
         {% csrf_token %}
-
         {% bootstrap_form form  %}
         {% buttons %}
         {% if form.action.value == 'add' %}
@@ -23,7 +26,6 @@
         {% endbuttons %}
       </form>
       {% endfor %}
-    </ul>
   </div>
 </div>
 {% endblock %}
