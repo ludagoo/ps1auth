@@ -4,6 +4,22 @@ from member_management.models import Person
 from accounts.models import PS1User
 from getpass import getpass
 import re
+from ldap3 import LDAPConstraintViolationResult
+
+
+password_requirements = r"""
+Password Complexity Requirements
+================================
+
+* Your password must be at least 7 characters long.
+* Your password must contain at least 3 of the 5 following complexity categories:
+** Uppercase characters
+** Lowercase characters
+** Numbers
+** Non-alphanumeric characters: ~!@#$%^&*_-+=`|\(){}[]:;"'<>,.?/
+** Any unicode character that is alphabetic but not uppercase or lowercase (glyphs)
+* Your password must not contain your username or full name.
+"""
 
 def username(username):
     if not re.match(r"^[a-z][a-z0-9]{2,30}$", username):
@@ -57,7 +73,21 @@ class Command(BaseCommand):
             email=options['email'],
             first_name = first_name,
             last_name = last_name,
-            password = password,
         )
+
+        self.set_password(user, password)
+
         person.user = user
         person.save()
+
+    def set_password(self, user, password):
+        """ Attempts to set the password, if the password set fails, it tries
+        again.
+        """
+        try:
+            user.set_password(password)
+        except LDAPConstraintViolationResult as e:
+            print(password_requirements)
+            shorter_message = e.message.split(':')[-1].strip().capitalize()
+            print('The exact reason your password was rejected: "{}"'.format(shorter_message))
+            self.set_password(user, getpass())

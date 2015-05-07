@@ -34,5 +34,3 @@ class AccountTest(TestCase):
         result = c.login(username='testuser', password='Garbage1')
         self.assertTrue(result)
         PS1User.objects.delete_user(user)
-
-
