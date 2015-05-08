@@ -12,7 +12,7 @@ from pprint import pprint
 def get_ldap_connection( binddn=settings.AD_BINDDN, password=settings.AD_BINDDN_PASSWORD):
     tls = Tls()
     server = Server(settings.AD_URL, tls=tls)
-    connection = Connection(server, user=binddn, password=password, auto_bind=True)
+    connection = Connection(server, user=binddn, password=password, auto_bind=True, raise_exceptions=True)
     return connection
 
 class PS1Backend(object):
@@ -80,4 +80,3 @@ class PS1Backend(object):
 
     def has_module_perms(self, user_obj, app_label):
         raise NotImplementedError
-

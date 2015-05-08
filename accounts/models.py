@@ -72,7 +72,7 @@ class PS1UserManager(BaseUserManager):
         result = l.delete(user_dn)
         user.delete()
 
-    def create_superuser(self, object_guid, password, email = None, first_name = None, last_name = None):
+    def create_superuser(self, object_guid, password = None, email = None, first_name = None, last_name = None):
         """
         object_guid is actually a username. calling it object_guid gets around
         a bug in ./manage.py createsuperuser
