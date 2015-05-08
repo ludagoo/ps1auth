@@ -193,7 +193,10 @@ class PS1User(AbstractBaseUser):
 
     @property
     def groups(self):
-        return PS1Group.objects.filter(dn__in=self.ldap_user['memberOf'])
+        try:
+            return PS1Group.objects.filter(dn__in=self.ldap_user['memberOf'])
+        except KeyError:
+            return []
 
     @property
     def ldap_user(self):
@@ -243,16 +246,19 @@ class PS1Group(models.Model):
 
     def remove_user(self, user):
         user_dn = user.ldap_user['distinguishedName'][0]
-        add_to_group_changelist = {
+        remove_from_group_changelist = {
             'member': (MODIFY_DELETE, [user_dn])
         }
         with get_ldap_connection() as c:
-            c.modify(self.dn, add_to_group_changelist)
+            c.modify(self.dn, remove_from_group_changelist)
             user._expire_ldap_data()
             return c.result
 
     def has_user(self, user):
-        return self.dn in user.ldap_user['memberOf']
+        try:
+            return self.dn in user.ldap_user['memberOf']
+        except KeyError:
+            return False
 
     def __str__(self):
         return self.display_name
