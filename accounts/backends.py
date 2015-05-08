@@ -1,4 +1,4 @@
-from ldap3 import Connection, LEVEL, Server, Tls, LDAPBindError
+from ldap3 import Connection, LEVEL, Server, Tls, LDAPBindError, LDAPInvalidCredentialsResult
 from ldap3.utils.conv import escape_bytes
 from django.contrib.auth.models import User, BaseUserManager
 from django.conf import settings
@@ -27,7 +27,7 @@ class PS1Backend(object):
 
         try:
             get_ldap_connection( binddn, password )
-        except LDAPBindError:
+        except (LDAPBindError, LDAPInvalidCredentialsResult):
             return None
 
         with get_ldap_connection() as c:
