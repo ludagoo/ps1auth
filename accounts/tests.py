@@ -34,6 +34,13 @@ class AccountTest(TestCase):
         self.assertTrue(result)
         PS1User.objects.delete_user(user)
 
+    def test_wrong_password(self):
+        user = PS1User.objects.create_user("testuser", password="Garbage1",  email="foo@bar.com")
+        c = Client()
+        result = c.login(username='testuser', password='WrongPassword1')
+        self.assertFalse(result)
+        PS1User.objects.delete_user(user)
+
 
 class GroupTest(TestCase):
 
