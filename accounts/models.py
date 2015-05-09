@@ -5,7 +5,7 @@ from django.db import models
 from ldap3 import BASE, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, ALL_ATTRIBUTES, LEVEL
 from ldap3.utils.conv import escape_bytes
 from ldap3.utils.dn import escape_attribute_value
-from ldap3.core.exceptions import LDAPBindError
+from ldap3.core.exceptions import LDAPBindError, LDAPInvalidCredentialsResult
 import uuid
 from .backends import PS1Backend, get_ldap_connection
 
@@ -141,7 +141,7 @@ class PS1User(AbstractBaseUser):
         try:
             get_ldap_connection(username, raw_password)
             return True
-        except LDAPBindError:
+        except (LDAPBindError, LDAPInvalidCredentialsResult):
             return False
 
     def set_password(self, raw_password):
