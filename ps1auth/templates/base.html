@@ -50,6 +50,9 @@
                 <li><a href="{% url 'admin:member_management_emailtemplate_changelist' %}">Mass Mail</a></li>
                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                 {% endif %}
+				<li class="dropdown-header">Doors</li>
+				<li><a href="http://frontdoor.pumpingstationone.org:8080/open" target="">Open Front Door</a></li>
+				<li><a href="http://backdoor.pumpingstationone.org:8080/open">Open Back Door</a></li>
               </ul>
             </li>
             {% else %}
